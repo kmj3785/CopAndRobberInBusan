@@ -1,0 +1,55 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+{% block content %}
+
+    <style>
+    #right{ text-align: right; }
+    #container {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+    }
+    #box-center {
+      text-align: center;
+    }
+    .button {
+        background-color: darkblue;
+        border: none;
+        color: white;
+        padding: 15px 30px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 32px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    </style>
+
+    <div class="container mt-3 pt-3">
+        <div class="row">
+            <div class="col">
+                <h2 id="right">Turn: </h2> 
+            </div>
+            <div class="col">
+                <h2 id="turn text">
+                    1
+                </h2>
+            </div>
+        </div>
+        <div class="row" id='container'>
+            <div>
+                {{m | safe}}
+            </div>
+            <div id='robber turn'>
+                <h3>Please select a node to move.</h3>
+                <button class="button" onclick="changeByjQuery(0)">0</button>
+                <button class="button" onclick="changeByjQuery(1)">1</button>
+                <button class="button" onclick="changeByjQuery(2)">2</button>
+                <button class="button" onclick="changeByjQuery(3)">3</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'mapscript.js' %}"></script>
+
+{% endblock %}
