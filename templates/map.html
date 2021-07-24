@@ -11,7 +11,7 @@
     #box-center {
       text-align: center;
     }
-    .button {
+    .button-blue {
         background-color: darkblue;
         border: none;
         color: white;
@@ -20,6 +20,18 @@
         text-decoration: none;
         display: inline-block;
         font-size: 32px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    .button-gray {
+        background-color: gray;
+        border: none;
+        color: white;
+        padding: 15px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 24px;
         margin: 4px 2px;
         cursor: pointer;
     }
@@ -32,7 +44,7 @@
             </div>
             <div class="col">
                 <h2 id="turn text">
-                    1
+                    {{turn}}
                 </h2>
             </div>
         </div>
@@ -40,16 +52,53 @@
             <div>
                 {{m | safe}}
             </div>
-            <div id='robber turn'>
-                <h3>Please select a node to move.</h3>
-                <button class="button" onclick="changeByjQuery(0)">0</button>
-                <button class="button" onclick="changeByjQuery(1)">1</button>
-                <button class="button" onclick="changeByjQuery(2)">2</button>
-                <button class="button" onclick="changeByjQuery(3)">3</button>
-            </div>
+            {% if is_finish %}
+                <div>
+                    <h3>Game Over</h3>
+                </div>
+            {% else %}
+                {% if is_rob_turn %}
+                <div id="node button">
+                    <h3>Please select a node to move.</h3>
+                    {% for i in "x"|rjust:linked_node_num %}
+                        <a type="button" class="button-blue" href="{% url 'map' %}" onclick="moveNext({{forloop.counter0}})">{{forloop.counter0}}</a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div>
+                    <h3>Press button.</h3>
+                    <a href="{% url 'map' %}" type="button" class="button-blue" onclick="moveNext(0)">cop move</a>
+                </div>
+                {% endif %}
+            {% endif %}
         </div>
+        <a href="{% url 'map' %}" type="button" class="button-gray" onclick="initMapInform()">초기화</a>
     </div>
 
-    <script src="{% static 'mapscript.js' %}"></script>
+    <script>
+        $.ajaxSetup({
+            headers: { "X-CSRFToken": '{{csrf_token}}' }
+        });
+
+        function moveNext(node = 0) {
+            $.ajax({
+                url: "{% url 'move_next_node' %}",
+                method: 'POST',
+                data: {
+                    next_node: node,
+                },
+                success:function(data){
+                },
+            });
+        }
+
+        function initMapInform() {
+            $.ajax({
+                url: "{% url 'init_map_inform' %}",
+                success:function(data){
+                },
+            });
+        }
+    </script>
 
 {% endblock %}
