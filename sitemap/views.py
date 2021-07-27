@@ -10,7 +10,9 @@ from collections import OrderedDict
 import pandas as pd
 import sqlite3
 
-cop_cur_node = 1400002600 # 금정구청
+cop_num = 3
+
+cops_cur_node = [1400002200, 1400002600, 1400003300] # ?, 금정구청, ?
 rob_cur_node = 1400002900 # 금정경찰서교차로
 
 turn = 1
@@ -39,7 +41,7 @@ def initMap():
             enode_point = [node_df.loc[enode, 'latitude'], node_df.loc[enode, 'longitude']]
             folium.PolyLine([fnode_point, enode_point]).add_to(m)
     
-    # json file에 저장할 dictionary 만들기 (temp)
+    # json file에 저장할 dictionary 만들기
     linked_node_data = OrderedDict()
 
     # Show nodes that can be moved by a thief.
@@ -59,9 +61,10 @@ def initMap():
     with open('linkedNode.json', 'w', encoding="utf-8") as make_file:
         json.dump(linked_node_data, make_file, ensure_ascii=False, indent='\t')
     
-    # Show Cop and Robber location (temp)
+    # Show Cop and Robber location
     folium.Marker([node_df.loc[rob_cur_node, 'latitude'], node_df.loc[rob_cur_node, 'longitude']], icon=folium.Icon(icon='car', prefix='fa', color = 'red')).add_to(m)
-    folium.Marker([node_df.loc[cop_cur_node, 'latitude'], node_df.loc[cop_cur_node, 'longitude']], icon=folium.Icon(icon='star', color = 'blue')).add_to(m)
+    for i in range(0, cop_num):
+        folium.Marker([node_df.loc[cops_cur_node[i], 'latitude'], node_df.loc[cops_cur_node[i], 'longitude']], icon=folium.Icon(icon='star', color = 'blue')).add_to(m)
 
     # Get html representation of map
     m = m._repr_html_()
@@ -70,21 +73,27 @@ def initMap():
 
 def map(request):
 
-    global is_rob_turn, cop_cur_node
+    global is_rob_turn, cops_cur_node
     
+    is_finish = False
+
+    for i in range(0, cop_num):
+        if cops_cur_node[i] == rob_cur_node:
+            is_finish = True
+
     context = {
         'm': initMap(),
         'turn' : turn,
         'is_rob_turn' : is_rob_turn,
         'linked_node_num' : len(node_df.loc[rob_cur_node, 'linkedNode']),
-        'is_finish' : cop_cur_node==rob_cur_node,
+        'is_finish' : is_finish,
     }
 
     return render(request, 'map.html', context)
 
 # Change Cop/Robber location
 def moveNextNode(request):
-    global is_rob_turn, cop_cur_node
+    global is_rob_turn, cops_cur_node
 
     if is_rob_turn:
         global turn 
@@ -99,7 +108,8 @@ def moveNextNode(request):
         is_rob_turn = False
 
     else:
-        cop_cur_node = node_df.loc[cop_cur_node, 'linkedNode'][0]
+        for i in range(0, cop_num):
+            cops_cur_node[i] = node_df.loc[cops_cur_node[i], 'linkedNode'][0]
         is_rob_turn = True
 
     return render(request, 'map.html')
@@ -107,9 +117,9 @@ def moveNextNode(request):
 # Init map inform
 def initMapInform(request):
 
-    global turn, cop_cur_node, rob_cur_node, is_rob_turn
+    global turn, cops_cur_node, rob_cur_node, is_rob_turn
     turn = 1
-    cop_cur_node = 1400002600 # 금정구청
+    cops_cur_node = [1400002200, 1400002600, 1400003300] # 금정구청
     rob_cur_node = 1400002900 # 금정경찰서교차로
     is_rob_turn = True
 

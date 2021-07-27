@@ -57,6 +57,7 @@
                     <h3>Game Over</h3>
                 </div>
             {% else %}
+                <!-- Robber turn UI -->
                 {% if is_rob_turn %}
                 <div id="node button">
                     <h3>Please select a node to move.</h3>
@@ -64,15 +65,17 @@
                         <a type="button" class="button-blue" href="{% url 'map' %}" onclick="moveNext({{forloop.counter0}})">{{forloop.counter0}}</a>
                     {% endfor %}
                 </div>
+                <!-- Cop turn UI -->
                 {% else %}
                 <div>
                     <h3>Press button.</h3>
-                    <a href="{% url 'map' %}" type="button" class="button-blue" onclick="moveNext(0)">cop move</a>
+                    <a type="button" class="button-blue" href="{% url 'map' %}" onclick="moveNext(0)">cop move</a>
                 </div>
                 {% endif %}
             {% endif %}
         </div>
-        <a href="{% url 'map' %}" type="button" class="button-gray" onclick="initMapInform()">초기화</a>
+        <!-- for initialization -->
+        <a type="button" class="button-gray" href="{% url 'map' %}" onclick="initMapInform()">초기화</a>
     </div>
 
     <script>
@@ -100,5 +103,5 @@
             });
         }
     </script>
-
 {% endblock %}
+
