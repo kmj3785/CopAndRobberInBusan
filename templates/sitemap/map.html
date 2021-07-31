@@ -1,0 +1,107 @@
+{% extends 'sitemap/base.html' %}
+{% load static %}
+{% block content %}
+
+    <style>
+    #right{ text-align: right; }
+    #container {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+    }
+    #box-center {
+      text-align: center;
+    }
+    .button-blue {
+        background-color: darkblue;
+        border: none;
+        color: white;
+        padding: 15px 30px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 32px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    .button-gray {
+        background-color: gray;
+        border: none;
+        color: white;
+        padding: 15px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 24px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    </style>
+
+    <div class="container mt-3 pt-3">
+        <div class="row">
+            <div class="col">
+                <h2 id="right">Turn: </h2> 
+            </div>
+            <div class="col">
+                <h2 id="turn text">
+                    {{turn}}
+                </h2>
+            </div>
+        </div>
+        <div class="row" id='container'>
+            <div>
+                {{m | safe}}
+            </div>
+            {% if is_finish %}
+                <div>
+                    <h3>Game Over</h3>
+                </div>
+            {% else %}
+                <!-- Robber turn UI -->
+                {% if is_rob_turn %}
+                <div id="node button">
+                    <h3>Please select a node to move.</h3>
+                    {% for i in "x"|rjust:linked_node_num %}
+                        <a type="button" class="button-blue" href="{% url 'map' %}" onclick="moveNext({{forloop.counter0}})">{{forloop.counter0}}</a>
+                    {% endfor %}
+                </div>
+                <!-- Cop turn UI -->
+                {% else %}
+                <div>
+                    <h3>Press button.</h3>
+                    <a type="button" class="button-blue" href="{% url 'map' %}" onclick="moveNext(0)">cop move</a>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+        <!-- for initialization -->
+        <a type="button" class="button-gray" href="{% url 'map' %}" onclick="initMapInform()">초기화</a>
+    </div>
+
+    <script>
+        $.ajaxSetup({
+            headers: { "X-CSRFToken": '{{csrf_token}}' }
+        });
+
+        function moveNext(node = 0) {
+            $.ajax({
+                url: "{% url 'move_next_node' %}",
+                method: 'POST',
+                data: {
+                    next_node: node,
+                },
+                success:function(data){
+                },
+            });
+        }
+
+        function initMapInform() {
+            $.ajax({
+                url: "{% url 'init_map_inform' %}",
+                success:function(data){
+                },
+            });
+        }
+    </script>
+{% endblock %}
+
