@@ -89,7 +89,7 @@ def map(request):
         'is_finish' : is_finish,
     }
 
-    return render(request, 'map.html', context)
+    return render(request, 'sitemap/map.html', context)
 
 # Change Cop/Robber location
 def moveNextNode(request):
@@ -112,7 +112,7 @@ def moveNextNode(request):
             cops_cur_node[i] = node_df.loc[cops_cur_node[i], 'linkedNode'][0]
         is_rob_turn = True
 
-    return render(request, 'map.html')
+    return render(request, 'sitemap/map.html')
 
 # Init map inform
 def initMapInform(request):
@@ -123,4 +123,4 @@ def initMapInform(request):
     rob_cur_node = 1400002900 # 금정경찰서교차로
     is_rob_turn = True
 
-    return render(request, 'map.html')
+    return render(request, 'sitemap/map.html')
