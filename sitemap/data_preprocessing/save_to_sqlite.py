@@ -3,8 +3,8 @@ import json
 import sqlite3
 
 # read data from .csv file
-node_df = pd.read_csv('./sitemap/backends/data/geumjeong_node_information.csv', encoding='euc-kr') # node 데이터
-edge_df = pd.read_csv('./sitemap/backends/data/geumjeong_edge_information.csv', encoding='euc-kr') # edge 데이터
+node_df = pd.read_csv('./sitemap/data_preprocessing/data/geumjeong_node_information.csv', encoding='euc-kr') # node 데이터
+edge_df = pd.read_csv('./sitemap/data_preprocessing/data/geumjeong_edge_information.csv', encoding='euc-kr') # edge 데이터
 
 # rename column
 node_df['linkedNode'] = ''
@@ -21,6 +21,4 @@ for id in fnode_id_set:
 # save to database
 engine = sqlite3.connect("./db.sqlite3")
 node_df.to_sql(name='node_information', con=engine, if_exists='append', index=False)
-
-# error : sqlite3.IntegrityError: UNIQUE constraint failed: edge_information.edgeId
-# edge_df.to_sql(name='edge_information', con=engine, if_exists='append', index=False)
+edge_df.to_sql(name='edge_information', con=engine, if_exists='append', index=False)
