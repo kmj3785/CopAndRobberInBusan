@@ -88,15 +88,22 @@ def AStarAlgorithm(startID, endID, node_df):
                     
             openList.append(child)
 
-# 중복x 조합
-def permutations_2(array, r):
+def permutations(array, c):
+    if len(array) >= c:
+        return permutations_2(array, c)
+    else:
+        return permutations_3(array, c)
+
+# 중복x  길이 c 수보다 많거나 같을 때
+def permutations_2(array, c):
     for i in range(len(array)):
-        if r == 1:
+        if c == 1:
             yield [array[i]]
         else:
-            for next in permutations_2(array[:i]+array[i+1:], r-1):
+            for next in permutations_2(array[:i]+array[i+1:], c-1):
                 yield [array[i]] + next
 
+# 중복o 길이 c 수보다 작을 때
 def permutations_3(array, c, turn = 0, number_of_dest=[], cop_goal_array=[]):
     if turn > c - 1:
         yield cop_goal_array
@@ -134,23 +141,13 @@ def MoveNode(cur_cop_nodes, cur_rob_node, node_df):
     next_cop_nodes = [0 for i in range(len(cur_cop_nodes))]
     min_weight = 10000000
 
-    if len(node_df.loc[cur_rob_node, 'linkedNode']) >= len(cur_cop_nodes):
-        for index in permutations_2(list(range(0, len(node_df.loc[cur_rob_node, 'linkedNode']))), len(cur_cop_nodes)):
-            weight = 0
+    for index in permutations(list(range(0, len(node_df.loc[cur_rob_node, 'linkedNode']))), len(cur_cop_nodes)):
+        weight = 0
+        for i in range(0, len(cur_cop_nodes)):
+            weight += len(cops_path[i][index[i]])
+        if weight < min_weight:
+            min_weight = weight
             for i in range(0, len(cur_cop_nodes)):
-                weight += len(cops_path[i][index[i]])
-            if weight < min_weight:
-                min_weight = weight
-                for i in range(0, len(cur_cop_nodes)):
-                    next_cop_nodes[i] = cal_next_cop_node(cops_path[i][index[i]], next_cop_nodes[i], cur_rob_node)
-    else:
-        for index in permutations_3(list(range(0, len(node_df.loc[cur_rob_node, 'linkedNode']))), len(cur_cop_nodes)):
-            weight = 0
-            for i in range(0, len(cur_cop_nodes)):
-                weight += len(cops_path[i][index[i]])
-            if weight < min_weight:
-                min_weight = weight
-                for i in range(0, len(cur_cop_nodes)):
-                    next_cop_nodes[i] = cal_next_cop_node(cops_path[i][index[i]], next_cop_nodes[i], cur_rob_node)
+                next_cop_nodes[i] = cal_next_cop_node(cops_path[i][index[i]], next_cop_nodes[i], cur_rob_node)
 
     return next_cop_nodes

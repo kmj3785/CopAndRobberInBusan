@@ -10,14 +10,14 @@ from collections import OrderedDict
 import pandas as pd
 import sqlite3
 
-from CopAndRobber import algo1
+from CopAndRobber import algo1_bfs
 
 cop_num = 3
 
 cops_cur_node = [1400002200, 1400002600, 1400003300] # ?, 금정구청, ?
 rob_cur_node = 1400002900 # 금정경찰서교차로
 
-turn = 1
+turn = 1  
 
 is_rob_turn = True
 
@@ -111,7 +111,7 @@ def moveNextNode(request):
 
     else:
         global cops_cur_node
-        cops_cur_node = algo1.MoveNode(cops_cur_node, rob_cur_node, node_df)
+        cops_cur_node = algo1_bfs.MoveNode(cops_cur_node, rob_cur_node, node_df)
         is_rob_turn = True
 
     return render(request, 'sitemap/map.html')
