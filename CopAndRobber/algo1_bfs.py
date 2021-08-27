@@ -28,7 +28,7 @@ def BFS(currentID, endID, node_df, visited=[], path=[]):
             BFS(nextID, endID, node_df, visited, path)
 
 
-def BFS_next_nodes(startID, endID, node_df):
+def BFS_next_nodes(startID, endID, node_df, cur_rob_node):
     costs = {}
     parents = {}
 
@@ -129,25 +129,47 @@ def MoveNode(cur_cop_nodes, cur_rob_node, node_df):
     for i, cop_node in enumerate(cur_cop_nodes):
         cops_next.append([])
         for linkedNode in node_df.loc[cur_rob_node, 'linkedNode']:
-            cops_next[i].append(BFS_next_nodes(cop_node, linkedNode, node_df))
+            cops_next[i].append(BFS_next_nodes(cop_node, linkedNode, node_df, cur_rob_node))
 
     next_cop_nodes = copy.deepcopy(cur_cop_nodes)
     min_weight = 10000000
 
     for index in permutations(list(range(0, len(node_df.loc[cur_rob_node, 'linkedNode']))), len(cur_cop_nodes)):
         weight = 0
+        numNextNode = 1
+        lenNextNodes = []
+
         for i in range(0, len(cur_cop_nodes)):
             weight += cops_next[i][index[i]].distance
+            lenNextNodes.append(len(cops_next[i][index[i]].nextNode))
+            numNextNode *= lenNextNodes[i]
         
-        temp_next_cop_nodes = []
-        for i in range(0, len(cur_cop_nodes)):
-            temp_next_cop_nodes.append(cal_next_cop_node(cops_next[i][index[i]].nextNode[0], next_cop_nodes[i], cur_rob_node, cops_next[i][index[i]].distance))
-        
-        if weight < min_weight:
-            min_weight = weight
-            next_cop_nodes = copy.deepcopy(temp_next_cop_nodes)
+        for curNextNodeIndex in range(0, numNextNode):
+            temp_next_cop_nodes = []
 
-        elif weight == min_weight and sum_vector_power(temp_next_cop_nodes, next_cop_nodes, cur_rob_node, node_df):
-            next_cop_nodes = copy.deepcopy(temp_next_cop_nodes)
+            # 3명일 때만
+            temp_next_cop_nodes.append(cal_next_cop_node(cops_next[0][index[0]].nextNode[curNextNodeIndex//(lenNextNodes[1]*lenNextNodes[2])], 
+                                        next_cop_nodes[0], cur_rob_node, cops_next[0][index[0]].distance))
+            temp_next_cop_nodes.append(cal_next_cop_node(cops_next[1][index[1]].nextNode[(curNextNodeIndex%(lenNextNodes[1]*lenNextNodes[2]))//lenNextNodes[2]], 
+                                        next_cop_nodes[1], cur_rob_node, cops_next[1][index[1]].distance))
+            temp_next_cop_nodes.append(cal_next_cop_node(cops_next[2][index[2]].nextNode[curNextNodeIndex%lenNextNodes[2]], 
+                                        next_cop_nodes[2], cur_rob_node, cops_next[2][index[2]].distance))
+        
+            if weight < min_weight:
+                min_weight = weight
+                next_cop_nodes = copy.deepcopy(temp_next_cop_nodes)
+
+            elif weight == min_weight and sum_vector_power(temp_next_cop_nodes, next_cop_nodes, cur_rob_node, node_df):
+                next_cop_nodes = copy.deepcopy(temp_next_cop_nodes)
+
+    # 겹치기 방지
+    if next_cop_nodes[0] == next_cop_nodes[1]:
+        next_cop_nodes[0] = cur_cop_nodes[0]
+    
+    if next_cop_nodes[0] == next_cop_nodes[2]:
+        next_cop_nodes[2] = cur_cop_nodes[2]
+        
+    if next_cop_nodes[1] == next_cop_nodes[2]:
+        next_cop_nodes[1] = cur_cop_nodes[1]
 
     return next_cop_nodes

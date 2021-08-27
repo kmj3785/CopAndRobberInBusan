@@ -62,20 +62,20 @@
                 <div id="node button">
                     <h3>Please select a node to move.</h3>
                     {% for i in "x"|rjust:linked_node_num %}
-                        <a type="button" class="button-blue" href="{% url 'map' %}" onclick="moveNext({{forloop.counter0}})">{{forloop.counter0}}</a>
+                        <a type="button" class="button-blue" onclick="moveNext({{forloop.counter0}})">{{forloop.counter0}}</a>
                     {% endfor %}
                 </div>
                 <!-- Cop turn UI -->
                 {% else %}
                 <div>
                     <h3>Press button.</h3>
-                    <a type="button" class="button-blue" href="{% url 'map' %}" onclick="moveNext(0)">cop move</a>
+                    <a type="button" class="button-blue" onclick="moveNext(0)">cop move</a>
                 </div>
                 {% endif %}
             {% endif %}
         </div>
         <!-- for initialization -->
-        <a type="button" class="button-gray" href="{% url 'map' %}" onclick="initMapInform()">초기화</a>
+        <a type="button" class="button-gray" onclick="initMapInform()">초기화</a>
     </div>
 
     <script>
@@ -91,6 +91,7 @@
                     next_node: node,
                 },
                 success:function(data){
+                    location.href = "{% url 'map' %}"
                 },
             });
         }
@@ -99,6 +100,7 @@
             $.ajax({
                 url: "{% url 'init_map_inform' %}",
                 success:function(data){
+                    location.href = "{% url 'map' %}"
                 },
             });
         }

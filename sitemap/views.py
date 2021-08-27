@@ -10,7 +10,7 @@ from collections import OrderedDict
 import pandas as pd
 import sqlite3
 
-from CopAndRobber import algo1_bfs
+from CopAndRobber import algo2
 
 cop_num = 3
 
@@ -33,7 +33,7 @@ def initMap():
     node_df['linkedNode'] = node_df['linkedNode'].apply(lambda x : json.loads(x)) # json to list
 
     # Create map, 지도 중심 금정구청으로 잡음
-    m = folium.Map(location=[35.243603319969786, 129.09212543391874], zoom_start=15)
+    m = folium.Map(location=[node_df.loc[rob_cur_node, 'latitude'], node_df.loc[rob_cur_node, 'longitude']], zoom_start=15)
 
     # draw graph on map
     for row_index, row in node_df.iterrows():
@@ -95,7 +95,7 @@ def map(request):
 
 # Change Cop/Robber location
 def moveNextNode(request):
-    global is_rob_turn
+    global is_rob_turn, cops_cur_node
 
     if is_rob_turn:
         global turn 
@@ -111,7 +111,7 @@ def moveNextNode(request):
 
     else:
         global cops_cur_node
-        cops_cur_node = algo1_bfs.MoveNode(cops_cur_node, rob_cur_node, node_df)
+        cops_cur_node = algo2.MoveNode(cops_cur_node, rob_cur_node, node_df)
         is_rob_turn = True
 
     return render(request, 'sitemap/map.html')
