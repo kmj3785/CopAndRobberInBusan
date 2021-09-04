@@ -130,6 +130,6 @@ dmypy.json
 
 # Release
 .vscode/
+linkedNode.json
+CopAndRobber/secret_config.py
 sitemap/data_preprocessing/
-secret_config.py
-

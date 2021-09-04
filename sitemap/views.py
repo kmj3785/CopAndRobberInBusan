@@ -10,19 +10,20 @@ from collections import OrderedDict
 import pandas as pd
 import sqlite3
 
+from CopAndRobber import algo2
+
 cop_num = 3
 
-cops_cur_node = [1400002200, 1400002600, 1400003300] # ?, 금정구청, ?
-rob_cur_node = 1400002900 # 금정경찰서교차로
-
-turn = 1
-
-is_rob_turn = True
+# default values
+default_cops_cur_node = [1400002200, 1400002600, 1400003300] # ?, 금정구청, ?
+default_rob_cur_node = 1400002900 # 금정경찰서교차로
+default_turn = 1  
+default_is_rob_turn = True
 
 node_df = pd.DataFrame()
 
 # map 구성
-def initMap():
+def initMap(is_rob_turn, rob_cur_node, cops_cur_node):
     global node_df
 
     # read node data from database
@@ -30,8 +31,8 @@ def initMap():
     node_df = pd.read_sql('SELECT * FROM node_information', engine, index_col='nodeId')
     node_df['linkedNode'] = node_df['linkedNode'].apply(lambda x : json.loads(x)) # json to list
 
-    # Create map,   지도 중심 금정구청으로 잡음
-    m = folium.Map(location=[35.243603319969786, 129.09212543391874], zoom_start=15)
+    # Create map, 지도 중심 금정구청으로 잡음
+    m = folium.Map(location=[node_df.loc[rob_cur_node, 'latitude'], node_df.loc[rob_cur_node, 'longitude']], zoom_start=15)
 
     # draw graph on map
     for row_index, row in node_df.iterrows():
@@ -40,9 +41,6 @@ def initMap():
             fnode_point = [row['latitude'], row['longitude']]
             enode_point = [node_df.loc[enode, 'latitude'], node_df.loc[enode, 'longitude']]
             folium.PolyLine([fnode_point, enode_point]).add_to(m)
-    
-    # json file에 저장할 dictionary 만들기
-    linked_node_data = OrderedDict()
 
     # Show nodes that can be moved by a thief.
     if is_rob_turn:
@@ -55,11 +53,6 @@ def initMap():
                             html='<div style="background-color: white; width:25px; height:25px; border-radius:50%; text-align:center; line-height:25px; font-size:15px;">'
                                     +(i).__str__()+'</div>',
                         )).add_to(m)
-            linked_node_data[i] = linked_node_id
-
-    # json 파일로 저장
-    with open('linkedNode.json', 'w', encoding="utf-8") as make_file:
-        json.dump(linked_node_data, make_file, ensure_ascii=False, indent='\t')
     
     # Show Cop and Robber location
     folium.Marker([node_df.loc[rob_cur_node, 'latitude'], node_df.loc[rob_cur_node, 'longitude']], icon=folium.Icon(icon='car', prefix='fa', color = 'red')).add_to(m)
@@ -72,9 +65,11 @@ def initMap():
 
 
 def map(request):
+    turn = request.session.get('turn', default_turn)
+    is_rob_turn = request.session.get('is_rob_turn', default_is_rob_turn)
+    cops_cur_node = request.session.get('cops_cur_node', default_cops_cur_node)
+    rob_cur_node = request.session.get('rob_cur_node', default_rob_cur_node)
 
-    global is_rob_turn, cops_cur_node
-    
     is_finish = False
 
     for i in range(0, cop_num):
@@ -82,7 +77,7 @@ def map(request):
             is_finish = True
 
     context = {
-        'm': initMap(),
+        'm': initMap(is_rob_turn, rob_cur_node, cops_cur_node),
         'turn' : turn,
         'is_rob_turn' : is_rob_turn,
         'linked_node_num' : len(node_df.loc[rob_cur_node, 'linkedNode']),
@@ -93,34 +88,27 @@ def map(request):
 
 # Change Cop/Robber location
 def moveNextNode(request):
-    global is_rob_turn, cops_cur_node
+    turn = request.session.get('turn', default_turn)
+    is_rob_turn = request.session.get('is_rob_turn', default_is_rob_turn)
+    cops_cur_node = request.session.get('cops_cur_node', default_cops_cur_node)
+    rob_cur_node = request.session.get('rob_cur_node', default_rob_cur_node)
 
     if is_rob_turn:
-        global turn 
-        turn = turn + 1
-
-        global rob_cur_node
-
-        with open('linkedNode.json') as json_file:
-            json_data = json.load(json_file)
-            rob_cur_node = json_data[request.POST['next_node'].__str__()]
-        
-        is_rob_turn = False
+        request.session['turn'] = turn + 1
+        request.session['rob_cur_node'] = node_df.loc[rob_cur_node, 'linkedNode'][int(request.POST['next_node'])]
+        request.session['is_rob_turn'] = False
 
     else:
-        for i in range(0, cop_num):
-            cops_cur_node[i] = node_df.loc[cops_cur_node[i], 'linkedNode'][0]
-        is_rob_turn = True
+        request.session['cops_cur_node'] = algo2.MoveNode(cops_cur_node, rob_cur_node, node_df)
+        request.session['is_rob_turn'] = True
 
     return render(request, 'sitemap/map.html')
 
 # Init map inform
 def initMapInform(request):
-
-    global turn, cops_cur_node, rob_cur_node, is_rob_turn
-    turn = 1
-    cops_cur_node = [1400002200, 1400002600, 1400003300] # 금정구청
-    rob_cur_node = 1400002900 # 금정경찰서교차로
-    is_rob_turn = True
+    request.session['turn'] = default_turn
+    request.session['cops_cur_node'] = default_cops_cur_node  # 금정구청
+    request.session['rob_cur_node'] = default_rob_cur_node # 금정경찰서교차로
+    request.session['is_rob_turn'] = default_is_rob_turn
 
     return render(request, 'sitemap/map.html')
