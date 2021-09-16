@@ -10,8 +10,8 @@ from collections import OrderedDict
 import pandas as pd
 import sqlite3
 
-from CopAndRobber import algo2
-from CopAndRobber import default_algo
+from CopAndRobber.Algorithm import algo2
+from CopAndRobber.Algorithm import default_algo
 
 cop_num = 3
 
