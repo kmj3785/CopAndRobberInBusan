@@ -11,6 +11,7 @@ import pandas as pd
 import sqlite3
 
 from CopAndRobber import algo2
+from CopAndRobber import default_algo
 
 cop_num = 3
 
@@ -100,15 +101,21 @@ def moveNextNode(request):
 
     else:
         request.session['cops_cur_node'] = algo2.MoveNode(cops_cur_node, rob_cur_node, node_df)
+        # request.session['cops_cur_node'] = default_algo.MoveNode(cops_cur_node, rob_cur_node, node_df)
         request.session['is_rob_turn'] = True
 
     return render(request, 'sitemap/map.html')
 
+# randomize cop and robber's start node
+def randomStartNode(request):
+    random_nodes = node_df.sample(4).index
+    request.session['cops_cur_node'] = list(int(x) for x in random_nodes[0:3])
+    request.session['rob_cur_node'] = int(random_nodes[-1])
+
 # Init map inform
 def initMapInform(request):
     request.session['turn'] = default_turn
-    request.session['cops_cur_node'] = default_cops_cur_node  # 금정구청
-    request.session['rob_cur_node'] = default_rob_cur_node # 금정경찰서교차로
+    randomStartNode(request)
     request.session['is_rob_turn'] = default_is_rob_turn
 
     return render(request, 'sitemap/map.html')
