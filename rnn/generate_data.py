@@ -40,6 +40,7 @@ cop_paths_df = pd.DataFrame(columns=['timestamp', 'turn', 'path', 'copAlgorithm'
 
 # input data size and cop algorithm
 learning_data_size = int(input("데이터를 얼마나 생성하시겠습니까?: "))
+saving_data_size = int(input("데이터를 몇 번마다 저장할까요?: "))
 cop_algorithm = int(input("경찰의 알고리즘을 선택하세요.\n1.algo2\n2.default\n"))
 cop_algorithm_txt = 'default'
 
@@ -57,17 +58,22 @@ for i in range(0, learning_data_size):
     if (i+1)%(round(learning_data_size*0.1)) == 0:
         print(f'Current game is {i+1}th')
 
+    # save to DB every 5000 turn
+    if (i+1)%saving_data_size == 0:
+        engine = sqlite3.connect("./db.sqlite3")
+        rob_paths_df.to_sql(name='rob_paths', con=engine, if_exists='append', index=False)
+        cop_paths_df.to_sql(name='cop_paths', con=engine, if_exists='append', index=False)
+        rob_paths_df = pd.DataFrame(columns=['timestamp', 'turn', 'path', 'copAlgorithm'])
+        cop_paths_df = pd.DataFrame(columns=['timestamp', 'turn', 'path', 'copAlgorithm'])
+        print(f'{i+1}번째까지 데이터베이스에 저장 완료했습니다.')
+
     # play game until robber is caught by cops
     rob_nodes = [rob_cur_node]
     cop_nodes = [cops_cur_node]
     while isFinish(cops_cur_node, rob_cur_node)!=True:
-        # check game turn and end game if game turn is over 50
-        if turn >= 200:
+        # check game turn and end game if game turn is over 100
+        if turn >= 100:
             print('Current game turn is over 200. End game by force')
-            print(cop_algorithm_txt)
-            for i in range(0, len(cop_nodes)):
-                print("cop nodes: " + cop_nodes[i].__str__())
-                print("rob nodes: " + rob_nodes[i].__str__())
             break
 
         if is_rob_turn:
@@ -99,9 +105,9 @@ print('데이터의 생성이 완료되었습니다.')
 print(f'데이터 생성에 걸린 시간: {end_time}s')
 
 # save to database
-save_to_database = input("데이터베이스에 저장할까요?(y/n): ")
-if save_to_database == 'y':
-    engine = sqlite3.connect("./db.sqlite3")
-    rob_paths_df.to_sql(name='rob_paths', con=engine, if_exists='append', index=False)
-    cop_paths_df.to_sql(name='cop_paths', con=engine, if_exists='append', index=False)
-    print('데이터베이스에 저장 완료했습니다.')
+# save_to_database = input("데이터베이스에 저장할까요?(y/n): ")
+# if save_to_database == 'y':
+engine = sqlite3.connect("./db.sqlite3")
+rob_paths_df.to_sql(name='rob_paths', con=engine, if_exists='append', index=False)
+cop_paths_df.to_sql(name='cop_paths', con=engine, if_exists='append', index=False)
+print('데이터베이스에 저장 완료했습니다.')
