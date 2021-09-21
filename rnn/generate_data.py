@@ -5,10 +5,9 @@ import pandas as pd
 import sqlite3
 import json
 import time
+import copy
 
-from CopAndRobber.Algorithm import algo2
-from CopAndRobber.Algorithm import default_algo
-from CopAndRobber.Algorithm import rob_algo
+from CopAndRobber.Algorithm import algo2, default_algo, rob_algo
 
 # read node data from database
 def readNodesFromDB():
@@ -36,11 +35,13 @@ def isFinish(cops_cur_node, rob_cur_node):
 
 node_df = readNodesFromDB()
 
-rob_paths_df = pd.DataFrame(columns=['turn', 'path', 'copAlgorithm'])
+rob_paths_df = pd.DataFrame(columns=['timestamp', 'turn', 'path', 'copAlgorithm'])
+cop_paths_df = pd.DataFrame(columns=['timestamp', 'turn', 'path', 'copAlgorithm'])
 
 # input data size and cop algorithm
 learning_data_size = int(input("데이터를 얼마나 생성하시겠습니까?: "))
 cop_algorithm = int(input("경찰의 알고리즘을 선택하세요.\n1.algo2\n2.default\n"))
+cop_algorithm_txt = 'default'
 
 start_time = time.time()
 
@@ -50,25 +51,47 @@ for i in range(0, learning_data_size):
     turn = 1
     is_rob_turn = True
     cops_cur_node, rob_cur_node = randomStartNode(node_df)
+    cops_past_node = [0, 0, 0]
+
+    # current game number
+    if (i+1)%(round(learning_data_size*0.1)) == 0:
+        print(f'Current game is {i+1}th')
 
     # play game until robber is caught by cops
     rob_nodes = [rob_cur_node]
+    cop_nodes = [cops_cur_node]
     while isFinish(cops_cur_node, rob_cur_node)!=True:
+        # check game turn and end game if game turn is over 50
+        if turn >= 200:
+            print('Current game turn is over 200. End game by force')
+            print(cop_algorithm_txt)
+            for i in range(0, len(cop_nodes)):
+                print("cop nodes: " + cop_nodes[i].__str__())
+                print("rob nodes: " + rob_nodes[i].__str__())
+            break
+
         if is_rob_turn:
             turn += 1
-            rob_cur_node = rob_algo.MoveNode(cops_cur_node, rob_cur_node, node_df)
+            rob_cur_node = rob_algo.MoveNode(cops_cur_node, rob_cur_node)
             rob_nodes.append(rob_cur_node)
         else:
             if cop_algorithm == 1:
-                cops_cur_node = algo2.MoveNode(cops_cur_node, rob_cur_node, node_df)
-            else:
+                cop_algorithm_txt = 'algo2'
+                cops_past_node, cops_cur_node = algo2.MoveNode(cops_cur_node, rob_cur_node, cops_past_node)
+            elif cop_algorithm == 2:
+                cop_algorithm_txt = 'default'
                 cops_cur_node = default_algo.MoveNode(cops_cur_node, rob_cur_node, node_df)
+            cop_nodes.append(cops_cur_node)
         is_rob_turn = not is_rob_turn
     
+    timestamp = pd.Timestamp.now()
     # add robber path to dataframe
-    rob_nodes_df = pd.DataFrame([[len(rob_nodes), json.dumps(rob_nodes), 'algo2']], columns=['turn', 'path', 'copAlgorithm'])
-    rob_paths_df = rob_paths_df.append(rob_nodes_df)
-    rob_paths_df = rob_paths_df.reset_index(drop=True)
+    rob_nodes_df = pd.DataFrame([[timestamp, turn, json.dumps(rob_nodes), cop_algorithm]], columns=['timestamp', 'turn', 'path', 'copAlgorithm'])
+    rob_paths_df = rob_paths_df.append(rob_nodes_df, ignore_index=True)
+
+    # add cop path to dataframe
+    cop_nodes_df = pd.DataFrame([[timestamp, turn, json.dumps(cop_nodes), cop_algorithm]], columns=['timestamp', 'turn', 'path', 'copAlgorithm'])
+    cop_paths_df = cop_paths_df.append(cop_nodes_df, ignore_index=True)
 
 end_time = time.time()-start_time
 
@@ -80,4 +103,5 @@ save_to_database = input("데이터베이스에 저장할까요?(y/n): ")
 if save_to_database == 'y':
     engine = sqlite3.connect("./db.sqlite3")
     rob_paths_df.to_sql(name='rob_paths', con=engine, if_exists='append', index=False)
+    cop_paths_df.to_sql(name='cop_paths', con=engine, if_exists='append', index=False)
     print('데이터베이스에 저장 완료했습니다.')
