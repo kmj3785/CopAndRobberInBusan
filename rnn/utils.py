@@ -3,6 +3,12 @@ import sqlite3
 import json
 import pandas as pd
 
+'''
+Functions needed for learning RNN.
+@author KMJ
+@version 1.0
+'''
+
 N_GROUP = 34
 
 engine = sqlite3.connect('./db.sqlite3')

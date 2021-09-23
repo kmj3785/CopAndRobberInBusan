@@ -8,6 +8,11 @@ from itertools import product
 import sqlite3
 import json
 
+'''
+Rob moves in the opposite direction of the vector sum of the c0ps
+@author KMJ
+@version 1.0
+'''
 
 engine = sqlite3.connect('./db.sqlite3')
 node_df = pd.read_sql('SELECT * FROM node_information', engine, index_col='nodeId')
@@ -52,6 +57,8 @@ def CalNextRobNode(next_rob_node, cur_cop_nodes):
         distances.append(CalDistance(next_rob_node, cur_cop_node))
     return NextRobNode(next_rob_node, min(distances), sum(distances))
 
+#input: Current cop and robber's nodeId.
+#return: next robber's nodeId
 def MoveNode(cur_cop_nodes, cur_rob_node):
     next_rob_nodes = []
     next_rob_node = NextRobNode(cur_rob_node, 0, 0)

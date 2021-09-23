@@ -7,7 +7,13 @@ import json
 import time
 import copy
 
-from CopAndRobber.Algorithm import algo2, default_algo, rob_algo
+from CopAndRobber.Algorithm import algo, default_algo, rob_algo
+
+'''
+Run the game until the robber is caught to create path data for the robber and cop.
+@author KMY
+@version 1.0
+'''
 
 # read node data from database
 def readNodesFromDB():
@@ -41,7 +47,7 @@ cop_paths_df = pd.DataFrame(columns=['timestamp', 'turn', 'path', 'copAlgorithm'
 # input data size and cop algorithm
 learning_data_size = int(input("데이터를 얼마나 생성하시겠습니까?: "))
 saving_data_size = int(input("데이터를 몇 번마다 저장할까요?: "))
-cop_algorithm = int(input("경찰의 알고리즘을 선택하세요.\n1.algo2\n2.default\n"))
+cop_algorithm = int(input("경찰의 알고리즘을 선택하세요.\n1.algo\n2.default\n"))
 cop_algorithm_txt = 'default'
 
 start_time = time.time()
@@ -73,7 +79,7 @@ for i in range(0, learning_data_size):
     while isFinish(cops_cur_node, rob_cur_node)!=True:
         # check game turn and end game if game turn is over 100
         if turn >= 100:
-            print('Current game turn is over 200. End game by force')
+            print('Current game turn is over 100. End game by force')
             break
 
         if is_rob_turn:
@@ -82,8 +88,8 @@ for i in range(0, learning_data_size):
             rob_nodes.append(rob_cur_node)
         else:
             if cop_algorithm == 1:
-                cop_algorithm_txt = 'algo2'
-                cops_past_node, cops_cur_node = algo2.MoveNode(cops_cur_node, rob_cur_node, cops_past_node)
+                cop_algorithm_txt = 'algo'
+                cops_past_node, cops_cur_node = algo.MoveNode(cops_cur_node, rob_cur_node, cops_past_node)
             elif cop_algorithm == 2:
                 cop_algorithm_txt = 'default'
                 cops_cur_node = default_algo.MoveNode(cops_cur_node, rob_cur_node, node_df)

@@ -2,7 +2,20 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def MoveNode(cops_cur_node, rob_cur_node, node_df):
+import sqlite3
+import json
+
+'''
+Move to the shortest distance to robber.
+@author KMY
+@version 1.0
+'''
+
+engine = sqlite3.connect('./db.sqlite3')
+node_df = pd.read_sql('SELECT * FROM node_information', engine, index_col='nodeId')
+node_df['linkedNode'] = node_df['linkedNode'].apply(lambda x : json.loads(x)) # json to list
+
+def MoveNode(cops_cur_node, rob_cur_node):
     G = nx.Graph()
     G.add_nodes_from(node_df.index)
 
@@ -14,4 +27,4 @@ def MoveNode(cops_cur_node, rob_cur_node, node_df):
     for cop_cur_node in cops_cur_node:
         next_cop_nodes.append(nx.shortest_path(G, source=cop_cur_node, target=rob_cur_node)[1])
     
-    return next_cop_nodes
+    return cops_cur_node, next_cop_nodes
