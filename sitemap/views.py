@@ -10,13 +10,16 @@ from collections import OrderedDict
 import pandas as pd
 import sqlite3
 
-from CopAndRobber import algo2
+from CopAndRobber.Algorithm import algo, default_algo, rnn_algo
+from rnn import predict, utils
 
 cop_num = 3
 
 # default values
 default_cops_cur_node = [1400002200, 1400002600, 1400003300] # ?, 금정구청, ?
+default_cops_past_node = [0, 0, 0]
 default_rob_cur_node = 1400002900 # 금정경찰서교차로
+default_rob_path = []
 default_turn = 1  
 default_is_rob_turn = True
 
@@ -91,24 +94,35 @@ def moveNextNode(request):
     turn = request.session.get('turn', default_turn)
     is_rob_turn = request.session.get('is_rob_turn', default_is_rob_turn)
     cops_cur_node = request.session.get('cops_cur_node', default_cops_cur_node)
+    cops_past_node = request.session.get('cops_past_node', default_cops_past_node)
     rob_cur_node = request.session.get('rob_cur_node', default_rob_cur_node)
+    rob_path = request.session.get('rob_path', default_rob_path)
 
     if is_rob_turn:
         request.session['turn'] = turn + 1
         request.session['rob_cur_node'] = node_df.loc[rob_cur_node, 'linkedNode'][int(request.POST['next_node'])]
+        request.session['rob_path'].append(request.session['rob_cur_node'])
         request.session['is_rob_turn'] = False
 
     else:
-        request.session['cops_cur_node'] = algo2.MoveNode(cops_cur_node, rob_cur_node, node_df)
+        request.session['cops_past_node'], request.session['cops_cur_node'] = rnn_algo.MoveNode(cops_cur_node, rob_cur_node, cops_past_node, predict.predict(rob_path))
+        # request.session['cops_cur_node'] = default_algo.MoveNode(cops_cur_node, rob_cur_node, node_df)
         request.session['is_rob_turn'] = True
 
     return render(request, 'sitemap/map.html')
 
+# randomize cop and robber's start node
+def randomStartNode(request):
+    random_nodes = node_df.sample(4).index
+    request.session['cops_cur_node'] = list(int(x) for x in random_nodes[0:3])
+    request.session['cops_past_node'] = default_cops_past_node
+    request.session['rob_cur_node'] = int(random_nodes[-1])
+    request.session['rob_path'] = []
+
 # Init map inform
 def initMapInform(request):
     request.session['turn'] = default_turn
-    request.session['cops_cur_node'] = default_cops_cur_node  # 금정구청
-    request.session['rob_cur_node'] = default_rob_cur_node # 금정경찰서교차로
+    randomStartNode(request)
     request.session['is_rob_turn'] = default_is_rob_turn
 
     return render(request, 'sitemap/map.html')
