@@ -64,7 +64,7 @@ for i in range(0, learning_data_size):
     if (i+1)%(round(learning_data_size*0.1)) == 0:
         print(f'Current game is {i+1}th')
 
-    # save to DB every 5000 turn
+    # save to DB every saving_data_size turn
     if (i+1)%saving_data_size == 0:
         engine = sqlite3.connect("./db.sqlite3")
         rob_paths_df.to_sql(name='rob_paths', con=engine, if_exists='append', index=False)
