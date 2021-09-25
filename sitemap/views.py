@@ -1,38 +1,25 @@
 from django.shortcuts import render
-from django.http import HttpResponse
 import folium
 from folium.features import DivIcon
-from branca.element import Element
 
-import json
-from collections import OrderedDict
+from CopAndRobber.Algorithm import rnn_algo
+from sitemap.utils import readNodesFromDB, randomStartNode
+from rnn import predict
 
-import pandas as pd
-import sqlite3
-
-from CopAndRobber.Algorithm import algo, default_algo, rnn_algo
-from rnn import predict, utils
+node_df = readNodesFromDB()
 
 cop_num = 3
 
 # default values
-default_cops_cur_node = [1400002200, 1400002600, 1400003300] # ?, 금정구청, ?
-default_cops_past_node = [0, 0, 0]
-default_rob_cur_node = 1400002900 # 금정경찰서교차로
+default_cops_cur_node, default_rob_cur_node = randomStartNode(node_df, cop_num)
+default_cops_past_node = [0] * cop_num
 default_rob_path = []
 default_turn = 1  
 default_is_rob_turn = True
 
-node_df = pd.DataFrame()
-
 # map 구성
 def initMap(is_rob_turn, rob_cur_node, cops_cur_node):
-    global node_df
-
-    # read node data from database
-    engine = sqlite3.connect('./db.sqlite3')
-    node_df = pd.read_sql('SELECT * FROM node_information', engine, index_col='nodeId')
-    node_df['linkedNode'] = node_df['linkedNode'].apply(lambda x : json.loads(x)) # json to list
+    # global node_df
 
     # Create map, 지도 중심 금정구청으로 잡음
     m = folium.Map(location=[node_df.loc[rob_cur_node, 'latitude'], node_df.loc[rob_cur_node, 'longitude']], zoom_start=15)
@@ -75,6 +62,10 @@ def map(request):
 
     is_finish = False
 
+    print(len(cops_cur_node))
+    print(cops_cur_node)
+    print(rob_cur_node)
+
     for i in range(0, cop_num):
         if cops_cur_node[i] == rob_cur_node:
             is_finish = True
@@ -111,18 +102,15 @@ def moveNextNode(request):
 
     return render(request, 'sitemap/map.html')
 
-# randomize cop and robber's start node
-def randomStartNode(request):
-    random_nodes = node_df.sample(4).index
-    request.session['cops_cur_node'] = list(int(x) for x in random_nodes[0:3])
-    request.session['cops_past_node'] = default_cops_past_node
-    request.session['rob_cur_node'] = int(random_nodes[-1])
-    request.session['rob_path'] = []
-
 # Init map inform
 def initMapInform(request):
+    random_cops_cur_node, random_rob_cur_node = randomStartNode(node_df, cop_num)
+
     request.session['turn'] = default_turn
-    randomStartNode(request)
+    request.session['cops_cur_node'] = random_cops_cur_node
+    request.session['cops_past_node'] = default_cops_past_node
+    request.session['rob_cur_node'] = random_rob_cur_node
+    request.session['rob_path'] = []
     request.session['is_rob_turn'] = default_is_rob_turn
 
     return render(request, 'sitemap/map.html')
